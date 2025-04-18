@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player with Transcript</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .video-container {
+            flex: 2;
+        }
+        .transcript-container {
+            flex: 1;
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        video {
+            width: 100%;
+            border-radius: 8px;
+        }
+        .transcript {
+            line-height: 1.6;
+        }
+        .word {
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+            display: inline-block;
+        }
+        .word:hover {
+            background-color: #e0e0e0;
+        }
+        .current-word {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Player with Transcript</h1>
+    <div class="container">
+        <div class="video-container">
+            <video id="videoPlayer" controls>
+                <source src="<%= videoPath %>" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        <div class="transcript-container">
+            <h2>Transcript</h2>
+            <div class="transcript" id="transcript">
+                <% transcriptData.forEach(function(word) { %>
+                    <span class="word" 
+                          data-start="<%= word.start %>" 
+                          data-end="<%= word.end %>">
+                        <span class="timestamp">
+                            [<%= Math.floor(word.start) %>s]
+                        </span>
+                        <%= word.word %>
+                    </span>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('videoPlayer');
+        const transcript = document.getElementById('transcript');
+        const words = document.querySelectorAll('.word');
+        
+        // Function to update word highlighting based on video time
+        function updateWordHighlighting() {
+            const currentTime = video.currentTime;
+            
+            // Remove current-word class from all words
+            words.forEach(word => {
+                word.classList.remove('current-word');
+            });
+            
+            // Find and highlight the current word
+            for (const word of words) {
+                const start = parseFloat(word.dataset.start);
+                const end = parseFloat(word.dataset.end);
+                
+                if (currentTime >= start && currentTime < end) {
+                    word.classList.add('current-word');
+                    
+                    // Scroll transcript to keep current word in view
+                    word.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    break;
+                }
+            }
+        }
+
+        // Add click handlers to words
+        words.forEach(word => {
+            word.addEventListener('click', () => {
+                const startTime = parseFloat(word.dataset.start);
+                video.currentTime = startTime;
+                video.play();
+            });
+        });
+
+        // Update highlighting when video time changes
+        video.addEventListener('timeupdate', updateWordHighlighting);
+        
+        // Update highlighting when video is loaded
+        video.addEventListener('loadedmetadata', updateWordHighlighting);
+        
+        // Update highlighting when video is played/paused
+        video.addEventListener('play', updateWordHighlighting);
+        video.addEventListener('pause', updateWordHighlighting);
+    </script>
+</body>
+</html> 
